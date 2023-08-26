@@ -4,15 +4,10 @@ import com.waynedillon.exceptions.NoAvailableSpacesException;
 import com.waynedillon.exceptions.VehicleAlreadyParkedException;
 import com.waynedillon.exceptions.VehicleNotFoundException;
 import com.waynedillon.utils.DateTimeUtils;
-import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 public class CarParkManager {
-    @Getter
-    private final String carParkFullMsg = "Vehicle not parked as there are no spaces available";
-    @Getter
-    private final String carAlreadyParkedMsg = "Vehicle has already been parked";
 
     public String addVehicle(String registration) {
         Vehicle toAdd = new Vehicle(registration);
