@@ -1,10 +1,13 @@
 package com.waynedillon;
 
+import com.waynedillon.exceptions.NoAvailableSpacesException;
+import com.waynedillon.exceptions.VehicleAlreadyParkedException;
+import com.waynedillon.exceptions.VehicleNotFoundException;
+import com.waynedillon.utils.DateTimeUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 public class CarParkManagerTest {
@@ -13,7 +16,7 @@ public class CarParkManagerTest {
     @BeforeEach
     private void setUp() {
         manager = new CarParkManager();
-        CarPark.getSpaces().clear();
+        CarPark.empty();
     }
 
     @Test
@@ -24,7 +27,7 @@ public class CarParkManagerTest {
     @Test
     public void testCantAddToFullCarPark() {
         fillCarPark(0);
-        Assertions.assertEquals(manager.getCarParkFullMsg(), manager.addVehicle("ABC123"));
+        Assertions.assertEquals(new NoAvailableSpacesException().getMessage(), manager.addVehicle("ABC123"));
     }
 
     @Test
@@ -47,7 +50,7 @@ public class CarParkManagerTest {
         String reg2 = "ABC456";
         String confirmationMsg = "Vehicle registration: " + reg1 + " parked at";
         Assertions.assertTrue(manager.addVehicle(reg1).startsWith(confirmationMsg));
-        Assertions.assertEquals(manager.getCarParkFullMsg(), manager.addVehicle(reg2));
+        Assertions.assertEquals(new NoAvailableSpacesException().getMessage(), manager.addVehicle(reg2));
         Assertions.assertEquals(0, CarPark.getAvailableSpaces());
     }
 
@@ -57,6 +60,11 @@ public class CarParkManagerTest {
         String confirmationMsg = "Vehicle registration: " + reg1 + " parked at";
         Assertions.assertTrue(manager.addVehicle(reg1).startsWith(confirmationMsg));
         Assertions.assertEquals(99, CarPark.getAvailableSpaces());
+    }
+
+    @Test
+    public void testRemoveVehicleNotAdded() {
+        Assertions.assertEquals(0, manager.removeVehicle("ABC123"));
     }
 
     @Test
@@ -70,10 +78,10 @@ public class CarParkManagerTest {
     }
 
     @Test
-    public void testRemoveAfter2Hours() {
+    public void testRemoveAfter2Hours() throws NoAvailableSpacesException, VehicleAlreadyParkedException {
         String reg1 = "ABC123";
         // add a few minutes to arrival time to avoid total going over two hours
-        CarPark.getSpaces().put(new Vehicle(reg1), LocalDateTime.now().minusHours(2).plusMinutes(2));
+        CarPark.addVehicle(new Vehicle(reg1), DateTimeUtils.now().minusHours(2).plusMinutes(2));
         Assertions.assertEquals(4.0, manager.removeVehicle(reg1));
         Assertions.assertEquals(100, CarPark.getAvailableSpaces());
     }
@@ -84,13 +92,17 @@ public class CarParkManagerTest {
         String confirmationMsg = "Vehicle registration: " + reg1 + " parked at";
         Assertions.assertTrue(manager.addVehicle(reg1).startsWith(confirmationMsg));
         Assertions.assertEquals(99, CarPark.getAvailableSpaces());
-        Assertions.assertEquals(manager.getCarAlreadyParkedMsg(), manager.addVehicle(reg1));
+        Assertions.assertEquals(new VehicleAlreadyParkedException().getMessage(), manager.addVehicle(reg1));
         Assertions.assertEquals(99, CarPark.getAvailableSpaces());
     }
 
     private void fillCarPark(int spacesRemaining) {
-        for (int i = 0; CarPark.getAvailableSpaces() > spacesRemaining; i++) {
-            CarPark.getSpaces().put(new Vehicle("ABC" + i), LocalDateTime.now());
+        try {
+            for (int i = 0; CarPark.getAvailableSpaces() > spacesRemaining; i++) {
+                CarPark.addVehicle(new Vehicle("ABC" + i), DateTimeUtils.now());
+            }
+        } catch (NoAvailableSpacesException | VehicleAlreadyParkedException e) {
+            // do nothing
         }
     }
 }

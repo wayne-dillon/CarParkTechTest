@@ -1,5 +1,8 @@
 package com.waynedillon;
 
+import com.waynedillon.exceptions.NoAvailableSpacesException;
+import com.waynedillon.exceptions.VehicleAlreadyParkedException;
+import com.waynedillon.exceptions.VehicleNotFoundException;
 import com.waynedillon.utils.DateTimeUtils;
 import lombok.Getter;
 
@@ -12,28 +15,27 @@ public class CarParkManager {
     private final String carAlreadyParkedMsg = "Vehicle has already been parked";
 
     public String addVehicle(String registration) {
-        if (CarPark.getAvailableSpaces() <= 0) {
-            return carParkFullMsg;
-        }
         Vehicle toAdd = new Vehicle(registration);
-        if (CarPark.getSpaces().containsKey(toAdd)) {
-            return carAlreadyParkedMsg;
+        LocalDateTime arrivalTime = DateTimeUtils.now();
+        try {
+            CarPark.addVehicle(toAdd, arrivalTime);
+        } catch (VehicleAlreadyParkedException | NoAvailableSpacesException e) {
+            return e.getMessage();
         }
-
-        LocalDateTime arrivalTime = LocalDateTime.now();
-        CarPark.getSpaces().put(toAdd, arrivalTime);
         return "Vehicle registration: " + registration + " parked at: " + arrivalTime;
     }
 
     public double removeVehicle(String registration) {
         Vehicle toRemove = new Vehicle(registration);
-        LocalDateTime arrivalTime = CarPark.getSpaces().get(new Vehicle(registration));
-        if (arrivalTime == null) {
+        LocalDateTime arrivalTime = null;
+        try {
+            arrivalTime = CarPark.getArrivalTime(toRemove);
+            CarPark.removeVehicle(toRemove);
+        } catch (VehicleNotFoundException e) {
             return 0.0;
         }
-        CarPark.getSpaces().remove(toRemove);
 
-        LocalDateTime exitTime = LocalDateTime.now();
+        LocalDateTime exitTime = DateTimeUtils.now();
         int hoursStayed = DateTimeUtils.getHoursBetween(arrivalTime, exitTime);
         return hoursStayed * CarPark.getPrice();
     }

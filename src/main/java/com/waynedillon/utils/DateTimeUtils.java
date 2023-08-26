@@ -14,4 +14,8 @@ public class DateTimeUtils {
     private static long timeInMillis(LocalDateTime dateTime) {
         return dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
+
+    public static LocalDateTime now() {
+        return LocalDateTime.now();
+    }
 }
