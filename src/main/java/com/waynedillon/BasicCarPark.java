@@ -6,21 +6,21 @@ import com.waynedillon.exceptions.VehicleNotFoundException;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class CarPark {
+public class BasicCarPark implements CarParkService {
     // Using static map to simulate database backing
-    private static final Map<Vehicle, LocalDateTime> spaces = new HashMap<>();
+    private static final Map<Vehicle, LocalDateTime> spaces = new ConcurrentHashMap<>();
     private static final int capacity = 100;
     @Getter
     private static final double price = 2.0;
 
-    public static int getAvailableSpaces() {
+    public int getAvailableSpaces() {
         return capacity - spaces.size();
     }
 
-    public static void addVehicle(Vehicle vehicle, LocalDateTime arrivalTime) throws NoAvailableSpacesException, VehicleAlreadyParkedException {
+    public void addVehicle(Vehicle vehicle, LocalDateTime arrivalTime) throws NoAvailableSpacesException, VehicleAlreadyParkedException {
         if (getAvailableSpaces() <= 0) {
             throw new NoAvailableSpacesException();
         }
@@ -31,11 +31,11 @@ public class CarPark {
         spaces.put(vehicle, arrivalTime);
     }
 
-    public static boolean hasVehicle(Vehicle vehicle) {
+    public boolean hasVehicle(Vehicle vehicle) {
         return spaces.containsKey(vehicle);
     }
 
-    public static LocalDateTime getArrivalTime(Vehicle vehicle) throws VehicleNotFoundException {
+    public LocalDateTime getArrivalTime(Vehicle vehicle) throws VehicleNotFoundException {
         if (!hasVehicle(vehicle)) {
             throw new VehicleNotFoundException();
         }
@@ -43,7 +43,7 @@ public class CarPark {
         return spaces.get(vehicle);
     }
 
-    public static void removeVehicle(Vehicle vehicle) throws VehicleNotFoundException {
+    public void removeVehicle(Vehicle vehicle) throws VehicleNotFoundException {
         if (!hasVehicle(vehicle)) {
             throw new VehicleNotFoundException();
         }
@@ -51,7 +51,7 @@ public class CarPark {
         spaces.remove(vehicle);
     }
 
-    public static void empty() {
+    public void empty() {
         spaces.clear();
     }
 }
